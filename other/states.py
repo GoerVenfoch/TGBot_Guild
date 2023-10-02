@@ -11,5 +11,10 @@ class PrimaryState(StatesGroup):
     introductionGuild = State()
     look_points = State()
     introductionRegulation = State()
+    introductionShildic = State()
     introductionProject = State()
     finishState = State()
+
+
+class NoDealInBitrix(StatesGroup):
+    whereDeal = State()

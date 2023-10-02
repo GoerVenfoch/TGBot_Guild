@@ -1,0 +1,3 @@
+aiogram
+fast-bitrix24
+python-dotenv

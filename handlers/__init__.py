@@ -1,2 +1,5 @@
 from handlers import dialog_handrers
 from handlers import different_handlers
+from handlers import search_deal_on_contact_handlers
+from handlers import dialog_download_file
+from handlers import callback_function

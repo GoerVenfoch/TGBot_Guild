@@ -15,16 +15,18 @@ def get_reply_keyboard(lst_name_btn: list, kb_type):
         return builder.as_markup(resize_keyboard=True)
 
 
-def get_inline_keyboard(lst_name_btn, kb_type):
+def get_inline_keyboard(lst_name_btn, lst_data, kb_type):
     builder = InlineKeyboardBuilder()
 
-    if kb_type == "url":
-        for key in lst_name_btn:
-            builder.add(types.InlineKeyboardButton(text=str(key),
-                                                   url=str(lst_name_btn[key])))
+    if kb_type == "url" and len(lst_name_btn) == len(lst_data):
+        for i in range(len(lst_name_btn)):
+            builder.add(types.InlineKeyboardButton(text=str(lst_name_btn[i]),
+                                                   url=str(lst_data[i])))
+        builder.adjust(1)
         return builder.as_markup(resize_keyboard=True)
     elif kb_type == "callback_data":
-        for key in lst_name_btn:
-            builder.add(types.InlineKeyboardButton(text=str(key),
-                                                   callback_data=str(lst_name_btn[key])))
+        for i in range(len(lst_name_btn)):
+            builder.add(types.InlineKeyboardButton(text=str(lst_name_btn[i]),
+                                                   callback_data=str(lst_data[i])))
+        builder.adjust(1)
         return builder.as_markup(resize_keyboard=True)
