@@ -40,20 +40,25 @@ random_sticker = [
 async def get_foto(message: Message, state: FSMContext):
     async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
         photo = await bot.get_file(message.photo[-1].file_id)
-        await bot.download(photo, f'photo{photo.file_id}.jpg')
-        image_read = open(f'photo{photo.file_id}.jpg', 'rb').read()
-        image_64_encode = base64.b64encode(image_read)
+        await bot.download(photo, f'photo{photo.file_id}.png')
+        image_read = open(f'photo{photo.file_id}.png', 'rb').read()
+        image_64_encode = base64.b64encode(image_read).decode('utf-8')
+        await bitrix.call('crm.contact.update',
+                          [{
+                              'ID': BitrixView.user.id_contact,
+                              'fields': {
+                                  'PHOTO': {
+                                      "fileData": [f'{message.from_user.last_name}_foto.png',
+                                                   str(image_64_encode)]}
+                              }
+                          }])
         await bitrix.call('crm.deal.update',
                           [{
                               'ID': BitrixView.user.id_deal,
                               'fields': {
-                                  'STAGE_ID': BitrixView.stages["GetFoto"],
-                                  'UF_CRM_1696306599663': {
-                                      "fileData": [f'{message.from_user.last_name}_foto.jpg',
-                                                   str(image_64_encode)[2:-1]]}
-                              }
+                                  'STAGE_ID': BitrixView.stages["GetFoto"]}
                           }])
-        file = pathlib.Path(f'photo{photo.file_id}.jpg')
+        file = pathlib.Path(f'photo{photo.file_id}.png')
         file.unlink()
     await message.answer("Классное фото))")
     await message.answer_sticker(FSInputFile('data/stickers/sticker.png'))
@@ -73,20 +78,24 @@ async def default_get_foto(message: Message):
 async def get_logo(message: Message, state: FSMContext):
     async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
         logo = await bot.get_file(message.photo[-1].file_id)
-        await bot.download(logo, f'logo{logo.file_id}.jpg')
-        image_read = open(f'logo{logo.file_id}.jpg', 'rb').read()
-        image_64_encode = base64.b64encode(image_read)
+        await bot.download(logo, f'logo{logo.file_id}.png')
+        image_read = open(f'logo{logo.file_id}.png', 'rb').read()
+        image_64_encode = base64.b64encode(image_read).decode('utf-8')
+        await bitrix.call('disk.folder.uploadfile',
+                          [{
+                              'id': 2570,
+                              'data': {'NAME': f'{message.from_user.last_name}_logo_1.png'},
+                              "fileContent": [f'{message.from_user.last_name}_logo.png',
+                                              str(image_64_encode)]
+                          }])
         await bitrix.call('crm.deal.update',
                           [{
                               'ID': BitrixView.user.id_deal,
                               'fields': {
-                                  'STAGE_ID': BitrixView.stages["GetLogo"],
-                                  'UF_CRM_1696306640046': {
-                                      "fileData": [f'{message.from_user.last_name}_logo.jpg',
-                                                   str(image_64_encode)[2:-1]]}
+                                  'STAGE_ID': BitrixView.stages["GetLogo"]
                               }
                           }])
-        file = pathlib.Path(f'logo{logo.file_id}.jpg')
+        file = pathlib.Path(f'logo{logo.file_id}.png')
         file.unlink()
     await message.answer(
         text=mes_connect_portal,

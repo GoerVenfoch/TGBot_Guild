@@ -6,7 +6,7 @@ from aiogram.utils.chat_action import ChatActionSender
 
 from markup import markup
 from other import PrimaryState, bot
-from bitrix import parse_bitrix
+from view import BitrixView
 
 router = Router()
 
@@ -35,11 +35,14 @@ _Как тебя зовут?_
 @router.message(Command("start"))
 async def start_handler(message: Message, state: FSMContext):
     async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
-        await parse_bitrix.completion_bitrix(message)
-        await message.answer(start_message, parse_mode="Markdown")
-        await message.answer_sticker(FSInputFile('data/stickers/hello.png'))
-        await message.answer(who,
-                             parse_mode="Markdown",
-                             reply_markup=markup.EMPTY,
-                             input_field_placeholder="Имя")
-        await state.set_state(PrimaryState.getName)
+        try:
+            await BitrixView().completion_bitrix(message)
+            await message.answer(start_message, parse_mode="Markdown")
+            await message.answer_sticker(FSInputFile('data/stickers/hello.png'))
+            await message.answer(who,
+                                 parse_mode="Markdown",
+                                 reply_markup=markup.EMPTY,
+                                 input_field_placeholder="Имя")
+            await state.set_state(PrimaryState.getName)
+        except:
+            await message.answer("У меня проблемы! Попробуйте попозже:)")

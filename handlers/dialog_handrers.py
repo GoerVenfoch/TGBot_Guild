@@ -121,7 +121,7 @@ router = Router()
 
 
 # Получаем имя и отправляем ссылку
-@router.message(PrimaryState.getName)
+@router.message(PrimaryState.getName, F.text)
 async def get_name_handler(message: Message, state: FSMContext):
     BitrixView.user.name = message.text
     if BitrixView.user.id_deal == "":
@@ -246,6 +246,9 @@ async def get_introduction_project(message: Message, state: FSMContext):
                                                 "callback_data"),
         parse_mode="Markdown"
     )
+    await bitrix_call_func('crm.deal.update',
+                           BitrixView.user.id_deal,
+                           {'STAGE_ID': BitrixView.stages["PushShildik"]})
     await message.answer_sticker(FSInputFile('data/stickers/cash.png'))
     await state.set_state(PrimaryState.finishState)
 
@@ -264,3 +267,6 @@ async def finish_handlers(message: Message):
                          reply_markup=markup.EMPTY,
                          parse_mode="Markdown")
     await message.answer_sticker(FSInputFile('data/stickers/okay.png'))
+    await bitrix_call_func('crm.deal.update',
+                           BitrixView.user.id_deal,
+                           {'STAGE_ID': BitrixView.stages["PushShildik"]})
