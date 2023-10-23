@@ -1,11 +1,11 @@
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters.command import Command
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message, FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.chat_action import ChatActionSender
 
 from markup import markup
-from other import PrimaryState, bot
+from other import PrimaryState, bot, NoDealInBitrix
 from view import BitrixView
 
 router = Router()
@@ -31,6 +31,14 @@ who = """
 _Как тебя зовут?_
 """
 
+mes_connect_chat_guild = """
+Очень приятно, *{Name}*!
+
+И вот твоя первая миссия _“Вступление в чат”_.
+
+Присоединись к закрытому чату Членов Гильдии по [ссылке](https://t.me/+LSBI6iI_SNdjOGNi) и нажми _“Присоединился”_
+"""
+
 
 @router.message(Command("start"))
 async def start_handler(message: Message, state: FSMContext):
@@ -46,3 +54,19 @@ async def start_handler(message: Message, state: FSMContext):
             await state.set_state(PrimaryState.getName)
         except:
             await message.answer("У меня проблемы! Попробуйте попозже:)")
+
+
+# Получаем имя и отправляем ссылку
+@router.message(PrimaryState.getName, F.text)
+async def get_name_handler(message: Message, state: FSMContext):
+    BitrixView.user.name = message.text
+    if BitrixView.user.id_deal == "":
+        await message.answer("Мы не смогли найти вас. Напишите вашу фамилию!")
+        await state.set_state(NoDealInBitrix.whereDeal)
+    else:
+        await message.answer(
+            text=mes_connect_chat_guild.format(Name=BitrixView.user.name),
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Присоединился",
+                                                                                     callback_data="connect_chat")]]),
+            parse_mode="Markdown"
+        )

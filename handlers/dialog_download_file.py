@@ -3,7 +3,7 @@ import random
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, FSInputFile
+from aiogram.types import Message, FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 
 import base64
 
@@ -19,11 +19,15 @@ mes_request_logo = """
 
 Отправь нам _лого компании_ и мы добавим его на наш сайт, чтобы все узнали о тебе.
 """
-mes_connect_portal = """
+mes_connect_portal = f"""
 Мы как и любая гильдия имеем свою обитель, в ней не только уютно, но также много волшебных знаний. 
 
 Проекции наших встреч, шаблоны договоров и многое другое помогут тебе сохранить чудесное настроение 
-даже в самый хмурый день. Вот держи [ссылку](https://gildin.ru)  и присоединяйся!
+даже в самый хмурый день. Вот держи [ссылку](https://portal.gildin.ru)  и присоединяйся!
+
+Вот твои логин: {BitrixView.login} и пароль: {BitrixView.password}
+
+Только не забудь сменить пароль!
 """
 
 random_sticker = [
@@ -99,11 +103,19 @@ async def get_logo(message: Message, state: FSMContext):
         file.unlink()
     await message.answer(
         text=mes_connect_portal,
-        reply_markup=ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Присоединился")]]),
-        parse_mode="Markdown",
-        input_field_placeholder="Присоединяйся"
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Присоединился",
+                                                                                 callback_data="connect_obit")]]),
+        parse_mode="Markdown"
     )
-    await state.set_state(PrimaryState.connectPortal)
+
+    await bitrix.call('crm.deal.update',
+                      [{
+                          'ID': BitrixView.user.id_deal,
+                          'fields': {
+                              'UF_CRM_LOGIN': "",
+                              'UF_CRM_PASS': ""
+                          }
+                      }])
 
 
 @router.message(PrimaryState.getLogo)

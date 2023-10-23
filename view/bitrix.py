@@ -10,6 +10,8 @@ class BitrixView:
     deals = []
     contacts_deals = []
     contacts = []
+    login = ""
+    password = ""
     # stages = {"EnterChat": 'C21:PREPARATION',
     #           "WriteComment": 'C21:PREPAYMENT_INVOIC',
     #           "GetFoto": 'C21:EXECUTING',
@@ -91,6 +93,9 @@ class BitrixView:
                 self.user.id_deal = self.contacts[0]
                 self.user.id_contact = users[str(self.contacts[1])]['ID']
 
+        deal = await bitrix.get_by_ID("crm.deal.get", self.user.id_deal)
+        self.login = deal["UF_CRM_LOGIN"]
+        self.password = deal["UF_CRM_PASS"]
         # пользователи
         users = await bitrix.get_all('user.get')
 

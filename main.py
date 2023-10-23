@@ -14,11 +14,11 @@ async def main():
     bot = other.bot
     dp = Dispatcher(storage=MemoryStorage())
 
-    dp.include_routers(handlers.dialog_handrers.router,
-                       handlers.different_handlers.router,
+    dp.include_routers(handlers.different_handlers.router,
                        handlers.search_deal_on_contact_handlers.router,
                        handlers.dialog_download_file.router,
-                       handlers.callback_function.router)
+                       handlers.callback_add_group.router,
+                       handlers.callback_dialog.router)
 
     await other.command_menu.set_default_commands(bot)
     await dp.start_polling(bot)
