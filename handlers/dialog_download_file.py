@@ -19,13 +19,15 @@ mes_request_logo = """
 
 Отправь нам _лого компании_ и мы добавим его на наш сайт, чтобы все узнали о тебе.
 """
-mes_connect_portal = f"""
+mes_connect_portal = """
 Мы как и любая гильдия имеем свою обитель, в ней не только уютно, но также много волшебных знаний. 
 
 Проекции наших встреч, шаблоны договоров и многое другое помогут тебе сохранить чудесное настроение 
 даже в самый хмурый день. Вот держи [ссылку](https://portal.gildin.ru)  и присоединяйся!
 
-Вот твои логин: {BitrixView.login} и пароль: {BitrixView.password}
+Вот твои 
+логин: {log}
+пароль: {pas}
 
 Только не забудь сменить пароль!
 """
@@ -43,13 +45,15 @@ random_sticker = [
 @router.message(PrimaryState.getFoto, F.photo)
 async def get_foto(message: Message, state: FSMContext):
     async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
+        context_data = await state.get_data()
+        user_data = context_data.get('user')
         photo = await bot.get_file(message.photo[-1].file_id)
         await bot.download(photo, f'photo{photo.file_id}.png')
         image_read = open(f'photo{photo.file_id}.png', 'rb').read()
         image_64_encode = base64.b64encode(image_read).decode('utf-8')
         await bitrix.call('crm.contact.update',
                           [{
-                              'ID': BitrixView.user.id_contact,
+                              'ID': user_data.id_contact,
                               'fields': {
                                   'PHOTO': {
                                       "fileData": [f'{message.from_user.last_name}_foto.png',
@@ -58,7 +62,7 @@ async def get_foto(message: Message, state: FSMContext):
                           }])
         await bitrix.call('crm.deal.update',
                           [{
-                              'ID': BitrixView.user.id_deal,
+                              'ID': user_data.id_deal,
                               'fields': {
                                   'STAGE_ID': BitrixView.stages["GetFoto"]}
                           }])
@@ -81,6 +85,8 @@ async def default_get_foto(message: Message):
 @router.message(PrimaryState.getLogo, F.photo)
 async def get_logo(message: Message, state: FSMContext):
     async with ChatActionSender.typing(bot=bot, chat_id=message.chat.id):
+        context_data = await state.get_data()
+        user_data = context_data.get('user')
         logo = await bot.get_file(message.photo[-1].file_id)
         await bot.download(logo, f'logo{logo.file_id}.png')
         image_read = open(f'logo{logo.file_id}.png', 'rb').read()
@@ -94,7 +100,7 @@ async def get_logo(message: Message, state: FSMContext):
                           }])
         await bitrix.call('crm.deal.update',
                           [{
-                              'ID': BitrixView.user.id_deal,
+                              'ID': user_data.id_deal,
                               'fields': {
                                   'STAGE_ID': BitrixView.stages["GetLogo"]
                               }
@@ -102,20 +108,12 @@ async def get_logo(message: Message, state: FSMContext):
         file = pathlib.Path(f'logo{logo.file_id}.png')
         file.unlink()
     await message.answer(
-        text=mes_connect_portal,
+        text=mes_connect_portal.format(log=user_data.login, pas=user_data.password),
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Присоединился",
                                                                                  callback_data="connect_obit")]]),
         parse_mode="Markdown"
     )
-
-    await bitrix.call('crm.deal.update',
-                      [{
-                          'ID': BitrixView.user.id_deal,
-                          'fields': {
-                              'UF_CRM_LOGIN': "",
-                              'UF_CRM_PASS': ""
-                          }
-                      }])
+    await state.set_state(PrimaryState.finishState)
 
 
 @router.message(PrimaryState.getLogo)

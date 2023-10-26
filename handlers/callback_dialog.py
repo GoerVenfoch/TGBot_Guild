@@ -1,10 +1,11 @@
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
-from aiogram.types import FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.chat_action import ChatActionSender
 
 from bitrix import bitrix_call_func
 from markup import markup
-from other import PrimaryState
+from other import PrimaryState, bot, bitrix
 from view import BitrixView
 
 mes_about_user = """
@@ -32,18 +33,20 @@ mes_about_user_2 = """
 """
 
 mes_request_foto = """
-*{Name}*, я рада, что смогла узнать тебя получше! А чтобы стать к коллегам еще ближе, поделись со мной своей лучшей 💣
+*{Name}*, я рада, что смогла узнать тебя получше! 
 
-фотографией _(размером не менее 600х600)_. 
+А чтобы стать к коллегам еще ближе, поделись со мной своей лучшей 💣 фотографией _(размером не менее 600х600)_. 
 
 `Она нам будет нужна для сайта ассоциации.`
 """
 
 mes_praise_connect_portal = """
 Как говорил один известный в узких кругах философ: 
+
 💬💬💬
 “Вы великолепны! Ваша интеграция в Гильдию проходит успешно!” 
 💬💬💬
+
 Теперь тебе доступен новый квест “Сила в знании”.
 """
 
@@ -55,14 +58,16 @@ mes_introduction_guild = """
 
 *Открытость, самореализация, взаимоподдержка, доверие, командность* - всё это теперь часть тебя, члена _Гильдии_. 
 
-Подробнее о *миссии Гильдии* можно прочитать [здесь](https://gildin.ru). Как ознакомишься, напиши в чат слово _“Миссия”_
+Подробнее о *миссии Гильдии* можно прочитать [здесь](https://gildin.ru).
 """
 
 mes_praise_introduction_guild = """
 Как говорил тот же известный в узких кругах философ: 
+
 💬💬💬
 “Как волнительно, уровень вашей интеграции повысился!” 
 💬💬💬
+
 И как здорово, что и твой уровень становится выше!
 
 _Ознакомься с правилами ношения_ [шильдика](https://docs.google.com/document/d/1XXzQaJdl6PbwWif8ORPM5soj7wD9h1RDcmuOeWCl4-M/edit)
@@ -86,11 +91,11 @@ mes_praise_introduction_regulation = """
 """
 
 mes_look_points = """
-Наша задача развивать рынок интеграторов и мы начинаем с себя. Для развития отрасли и каждого мы осуществляем 
-совместные проекты в которых мы объединяемся.
+Наша задача развивать рынок интеграторов и мы начинаем с себя. 
+Для развития отрасли и каждого мы осуществляем совместные проекты в которых мы объединяемся.
 
-Важно, что участие в активностях не только помогает тебе развиваться, но и позволят получать от нас _подарки_ в 
-виде _баллов_. Их можно потратить на *платные курсы Гильдии*.
+Важно, что участие в активностях не только помогает тебе развиваться, но и позволят получать от нас _подарки_ в виде _баллов_. 
+Их можно потратить на *платные курсы Гильдии*.
 
 Ознакомиться с *системой баллов* и, после ознакомления, напиши _“Я готов сделать шаг”_
 """
@@ -104,20 +109,18 @@ _Не забудь написать мне какой проект заинте�
 """
 
 mes_praise_introduction_project = """
-*Поздравляю!* Ты теперь не новичок, а активный член _нашей Гильдии_. 
-
-И в честь завершения твоей интеграции, предлагаю пройти [тест]() и небольшой подарок к нему.
+*Поздравляю!* Ты теперь не новичок, а активный член _нашей Гильдии_.
 """
 
 mes_finish_state = """
 `Ты любишь награды?`
 
-Мы тоже! Поэтому готовы подарить тебе наш шильдик. Прими активное участие в обсуждении проекта 
-и он - твой) Размести его у себя на сайте и все увидят, ты - один из нас!
+Мы тоже! Поэтому готовы подарить тебе наш шильдик. Прими активное участие в обсуждении проекта и он - твой) 
+Размести его у себя на сайте и все увидят, ты - один из нас!
 
 Спасибо за твое время и вот обещанный подарок - 1⃣0⃣0⃣0⃣  _баллов_ на курсы.  
 
-*Молодец что дошел будь активнее*
+*Молодец) Будь активнее*
 """
 
 router = Router()
@@ -125,19 +128,24 @@ router = Router()
 
 # Присоединился по ссылке, отправляем задание "Представиться"
 @router.callback_query(F.data == "connect_chat")
-async def callback_connect_chat_guild(callback: types.CallbackQuery):
+async def callback_connect_chat_guild(callback: types.CallbackQuery, state: FSMContext):
+    context_data = await state.get_data()
+    user_data = context_data.get('user')
     await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
+                           user_data.id_deal,
                            {
                                'STAGE_ID': BitrixView.stages["EnterChat"]
                            })
     await callback.message.answer(
-        text=mes_about_user.format(Name=BitrixView.user.name),
+        text=mes_about_user.format(Name=user_data.name),
         parse_mode="Markdown"
     )
+    print(user_data.id_deal)
+    print(user_data.last_name)
+    print(user_data.id_user)
     await callback.message.answer_sticker(FSInputFile('data/stickers/thanks.png'))
     await callback.message.answer(
-        text=mes_about_user_2.format(Name=BitrixView.user.name),
+        text=mes_about_user_2.format(Name=user_data.name),
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Представился",
                                                                                  callback_data="imagine")]]),
         parse_mode="Markdown"
@@ -146,37 +154,47 @@ async def callback_connect_chat_guild(callback: types.CallbackQuery):
 
 @router.callback_query(F.data == "imagine")
 async def callback_request_foto(callback: types.CallbackQuery, state: FSMContext):
+    context_data = await state.get_data()
+    user_data = context_data.get('user')
     await callback.message.answer(
-        text=mes_request_foto.format(Name=BitrixView.user.name),
+        text=mes_request_foto.format(Name=user_data.name),
         parse_mode="Markdown"
     )
     await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
+                           user_data.id_deal,
                            {
-                               'STAGE_ID': BitrixView.stages["WriteComment"],
-                               'COMMENTS': BitrixView.user.comment
+                               'STAGE_ID': BitrixView.stages["WriteComment"]
                            })
     await state.set_state(PrimaryState.getFoto)
 
 
+@router.callback_query(F.data == "website_link")
+async def callback_get_website_link(callback: types.CallbackQuery):
+    pass
+
+
 @router.callback_query(F.data == "connect_obit")
-async def callback_connect_portal(callback: types.CallbackQuery):
+async def callback_connect_portal(callback: types.CallbackQuery, state: FSMContext):
+    context_data = await state.get_data()
+    user_data = context_data.get('user')
     await callback.message.answer(mes_praise_connect_portal, parse_mode="Markdown")
     await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
+                           user_data.id_deal,
                            {
                                'STAGE_ID': BitrixView.stages["SignPortal"]
                            })
     await callback.message.answer(
         text=mes_introduction_guild,
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Миссия",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Миссия выполнена",
                                                                                  callback_data="mission")]]),
         parse_mode="Markdown"
     )
 
 
 @router.callback_query(F.data == "mission")
-async def callback_introduction_guild(callback: types.CallbackQuery):
+async def callback_introduction_guild(callback: types.CallbackQuery, state: FSMContext):
+    context_data = await state.get_data()
+    user_data = context_data.get('user')
     await callback.message.answer(
         text=mes_introduction_regulation,
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Ознакомлен",
@@ -184,7 +202,7 @@ async def callback_introduction_guild(callback: types.CallbackQuery):
         parse_mode="Markdown"
     )
     await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
+                           user_data.id_deal,
                            {
                                'STAGE_ID': BitrixView.stages["IntroductionGuild"]
                            })
@@ -201,14 +219,16 @@ async def callback_introduction_shildic(callback: types.CallbackQuery):
 
 
 @router.callback_query(F.data == "learn_shildic")
-async def callback_look_points(callback: types.CallbackQuery):
+async def callback_look_points(callback: types.CallbackQuery, state: FSMContext):
+    context_data = await state.get_data()
+    user_data = context_data.get('user')
     await callback.message.answer(
         text="`Ура! Теперь мы с уверенностью можем доверить тебе использование отличительного знака.`",
         parse_mode="Markdown")
     await callback.message.answer_sticker(FSInputFile('data/stickers/hearts.png'))
     await callback.message.answer(mes_praise_introduction_regulation, parse_mode="Markdown")
     await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
+                           user_data.id_deal,
                            {'STAGE_ID': BitrixView.stages["IntroductionRegulation"]})
     await callback.message.answer(
         text=mes_look_points,
@@ -220,36 +240,39 @@ async def callback_look_points(callback: types.CallbackQuery):
 
 @router.callback_query(F.data == "ready_step")
 async def callback_introduction_project(callback: types.CallbackQuery, state: FSMContext):
+    context_data = await state.get_data()
+    user_data = context_data.get('user')
     await callback.message.answer(
         text=mes_introduction_project,
-        reply_markup=markup.get_inline_keyboard([group['NAME'] for group in BitrixView.groups],
-                                                ["group_" + group['ID'] for group in BitrixView.groups],
+        reply_markup=markup.get_inline_keyboard([group['NAME'] for group in user_data.groups],
+                                                ["group_" + group['ID'] for group in user_data.groups],
                                                 "callback_data"),
         parse_mode="Markdown"
     )
     await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
+                           user_data.id_deal,
                            {'STAGE_ID': BitrixView.stages["PushShildik"]})
-    await callback.message.answer_sticker(FSInputFile('data/stickers/cash.png'),
-                                          reply_markup=ReplyKeyboardMarkup(
-                                              keyboard=[[KeyboardButton(text="Продолжим")]]))
+    await callback.message.answer_sticker(FSInputFile('data/stickers/cash.png'))
     await state.set_state(PrimaryState.finishState)
 
 
 @router.callback_query(F.data == "continue_integra")
-async def finish_handlers(callback: types.CallbackQuery):
-    await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
-                           {'STAGE_ID': BitrixView.stages["Win"]})
-    await callback.message.answer(mes_praise_introduction_project,
-                                  reply_markup=markup.EMPTY,
-                                  parse_mode="Markdown")
-    await callback.message.answer_document(FSInputFile('data/shildic/shildic_dark.jpg'))
-    await callback.message.answer_document(FSInputFile('data/shildic/shildic_white.jpg'))
-    await callback.message.answer(mes_finish_state,
-                                  reply_markup=markup.EMPTY,
-                                  parse_mode="Markdown")
-    await callback.message.answer_sticker(FSInputFile('data/stickers/okay.png'))
-    await bitrix_call_func('crm.deal.update',
-                           BitrixView.user.id_deal,
-                           {'STAGE_ID': BitrixView.stages["PushShildik"]})
+async def finish_handlers(callback: types.CallbackQuery, state: FSMContext):
+    async with ChatActionSender.typing(bot=bot, chat_id=callback.message.chat.id):
+        context_data = await state.get_data()
+        user_data = context_data.get('user')
+        await bitrix_call_func('crm.deal.update',
+                               user_data.id_deal,
+                               {'STAGE_ID': BitrixView.stages["Win"]})
+        await callback.message.answer(mes_praise_introduction_project,
+                                      reply_markup=markup.EMPTY,
+                                      parse_mode="Markdown")
+        await callback.message.answer_document(FSInputFile('data/shildic/shildic_dark.jpg'))
+        await callback.message.answer_document(FSInputFile('data/shildic/shildic_white.jpg'))
+        await callback.message.answer(mes_finish_state,
+                                      reply_markup=markup.EMPTY,
+                                      parse_mode="Markdown")
+        await callback.message.answer_sticker(FSInputFile('data/stickers/okay.png'))
+        await bitrix_call_func('crm.deal.update',
+                               user_data.id_deal,
+                               {'STAGE_ID': BitrixView.stages["PushShildik"]})
