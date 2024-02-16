@@ -5,7 +5,7 @@ from aiogram.utils.chat_action import ChatActionSender
 
 from bitrix import bitrix_call_func
 from markup import markup
-from other import PrimaryState, bot, bitrix
+from other import PrimaryState, bot
 from view import BitrixView
 
 mes_about_user = """
@@ -120,7 +120,7 @@ mes_finish_state = """
 
 Спасибо за твое время и вот обещанный подарок - 1⃣0⃣0⃣0⃣  _баллов_ на курсы.  
 
-*Молодец) Будь активнее*
+*Молодец, что дошел, оставайся активным!*
 """
 
 router = Router()
@@ -143,6 +143,8 @@ async def callback_connect_chat_guild(callback: types.CallbackQuery, state: FSMC
     print(user_data.id_deal)
     print(user_data.last_name)
     print(user_data.id_user)
+    print(user_data.groups)
+    print(user_data.login)
     await callback.message.answer_sticker(FSInputFile('data/stickers/thanks.png'))
     await callback.message.answer(
         text=mes_about_user_2.format(Name=user_data.name),
@@ -166,11 +168,6 @@ async def callback_request_foto(callback: types.CallbackQuery, state: FSMContext
                                'STAGE_ID': BitrixView.stages["WriteComment"]
                            })
     await state.set_state(PrimaryState.getFoto)
-
-
-@router.callback_query(F.data == "website_link")
-async def callback_get_website_link(callback: types.CallbackQuery):
-    pass
 
 
 @router.callback_query(F.data == "connect_obit")

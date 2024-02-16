@@ -3,8 +3,9 @@ from view.user_bitrix import UserBitrix
 from aiogram.types import Message
 
 
-async def completion_bitrix(message: Message):
+async def completion_bitrix(message: Message, mode: int):
     user_data = UserBitrix()
+
     group = await bitrix.get_all('sonet_group.get',
                                  params={
                                      'FILTER': {'%VISIBLE': 'Y'}
@@ -31,10 +32,18 @@ async def completion_bitrix(message: Message):
             user_data.contacts += buffer
     except AttributeError:
         user_data.contacts = [user_data.deals[0]['ID'], user_data.contacts_deals[0]['CONTACT_ID']]
-    print(user_data.name)
-    print(user_data.id_user)
-    print(user_data.last_name)
-    print(user_data.id_deal)
+    # print(user_data.name)
+    # print(user_data.id_user)
+    # print(user_data.last_name)
+    # print(user_data.id_deal)
+
+    if mode == 2:
+        last_name = message.text
+        first_name = ""
+    else:
+        first_name = message.from_user.first_name
+        last_name = message.from_user.last_name
+
     try:
         # данные пользователей по id
         users = await bitrix.get_by_ID(
@@ -43,10 +52,10 @@ async def completion_bitrix(message: Message):
 
         # возвращаемся к id сделки через пользователя
         for i in user_data.contacts:
-            if (users[str(i[1])]['NAME'] == message.from_user.first_name and
-                    users[str(i[1])]['LAST_NAME'] == message.from_user.last_name):
-                user_data.name = message.from_user.first_name
-                user_data.last_name = message.from_user.last_name
+            if ((mode == 1 and users[str(i[1])]['NAME'] == first_name or
+                    mode == 2) and users[str(i[1])]['LAST_NAME'] == last_name):
+                user_data.name = users[str(i[1])]['NAME']
+                user_data.last_name = users[str(i[1])]['LAST_NAME']
                 for id_contact in user_data.contacts:
                     if str(id_contact[1]) == str(users[str(i[1])]['ID']):
                         user_data.id_deal = id_contact[0]
@@ -62,10 +71,10 @@ async def completion_bitrix(message: Message):
             [user_data.contacts[1]])
 
         # возвращаемся к id сделки через пользователя
-        if (users[str(user_data.contacts[1])]['NAME'] == message.from_user.first_name and
-                users[str(user_data.contacts[1])]['LAST_NAME'] == message.from_user.last_name):
-            user_data.name = message.from_user.first_name
-            user_data.last_name = message.from_user.last_name
+        if ((mode == 1 and users[str(user_data.contacts[1])]['NAME'] == first_name or mode == 2) and
+                users[str(user_data.contacts[1])]['LAST_NAME'] == last_name):
+            user_data.name = users[str(user_data.contacts[1])]['NAME']
+            user_data.last_name = users[str(user_data.contacts[1])]['LAST_NAME']
             user_data.id_deal = user_data.contacts[0]
             user_data.id_contact = users[str(user_data.contacts[1])]['ID']
             user_data.login = str(users[str(user_data.contacts[1])]['UF_CRM_LOGIN'])

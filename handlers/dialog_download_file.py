@@ -3,7 +3,7 @@ import random
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, FSInputFile
 
 import base64
 
@@ -18,18 +18,9 @@ mes_request_logo = """
 `Ты любишь выделиться и хочешь чтобы другие это узнали?` 
 
 Отправь нам _лого компании_ и мы добавим его на наш сайт, чтобы все узнали о тебе.
-"""
-mes_connect_portal = """
-Мы как и любая гильдия имеем свою обитель, в ней не только уютно, но также много волшебных знаний. 
 
-Проекции наших встреч, шаблоны договоров и многое другое помогут тебе сохранить чудесное настроение 
-даже в самый хмурый день. Вот держи [ссылку](https://portal.gildin.ru)  и присоединяйся!
-
-Вот твои 
-логин: {log}
-пароль: {pas}
-
-Только не забудь сменить пароль!
+Формат файла: .png
+Размер логотипа: не менее 448 × 348 px
 """
 
 random_sticker = [
@@ -108,12 +99,9 @@ async def get_logo(message: Message, state: FSMContext):
         file = pathlib.Path(f'logo{logo.file_id}.png')
         file.unlink()
     await message.answer(
-        text=mes_connect_portal.format(log=user_data.login, pas=user_data.password),
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Присоединился",
-                                                                                 callback_data="connect_obit")]]),
-        parse_mode="Markdown"
+        text="Отлично) Отправь ссылку на свой сайт, чтобы при нажатии на логотип все желающие могли с тобой познакомиться поближе",
     )
-    await state.set_state(PrimaryState.finishState)
+    await state.set_state(PrimaryState.getLink)
 
 
 @router.message(PrimaryState.getLogo)
